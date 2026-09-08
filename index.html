@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subtraction Strike</title>
+  <style>
+    :root {
+      --ink: #14213d;
+      --muted: #586174;
+      --paper: #fffdf7;
+      --panel: rgba(255, 255, 255, 0.86);
+      --blue: #168aad;
+      --teal: #34d399;
+      --gold: #f7b801;
+      --pink: #ff5c8a;
+      --violet: #7c3aed;
+      --shadow: 0 22px 55px rgba(20, 33, 61, 0.18);
+      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 12%, rgba(255, 255, 255, 0.9) 0 9%, transparent 10%),
+        radial-gradient(circle at 88% 18%, rgba(255, 210, 76, 0.38) 0 11%, transparent 12%),
+        linear-gradient(135deg, #c9f8ff 0%, #f9f7d9 45%, #ffe3ec 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(45deg, rgba(20, 33, 61, 0.05) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(20, 33, 61, 0.05) 25%, transparent 25%);
+      background-size: 34px 34px;
+      opacity: 0.55;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1080px, calc(100vw - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border: 3px solid rgba(20, 33, 61, 0.12);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .bolt-mark {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #14213d;
+      color: var(--gold);
+      clip-path: polygon(43% 0, 78% 0, 61% 35%, 88% 35%, 32% 100%, 47% 52%, 18% 52%);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 3vw, 2.5rem);
+      letter-spacing: 0;
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-weight: 750;
+      font-size: clamp(0.84rem, 1.8vw, 1rem);
+    }
+
+    .score-pill {
+      flex: 0 0 auto;
+      min-width: 124px;
+      display: grid;
+      place-items: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 3px solid #14213d;
+      background: #fff;
+      box-shadow: 6px 6px 0 #14213d;
+      font-weight: 950;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+    }
+
+    .game-stage {
+      display: grid;
+      place-items: center;
+      padding: 4px 0 22px;
+    }
+
+    .question-panel,
+    .reward-panel {
+      width: min(760px, 100%);
+      border: 3px solid rgba(20, 33, 61, 0.18);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 4vw, 34px);
+      text-align: center;
+      backdrop-filter: blur(12px);
+    }
+
+    .prompt-label {
+      margin: 0 0 14px;
+      color: var(--blue);
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      font-weight: 900;
+    }
+
+    .problem {
+      min-height: 120px;
+      display: grid;
+      place-items: center;
+      margin: 0 0 20px;
+      padding: 12px;
+      border: 4px dashed rgba(22, 138, 173, 0.55);
+      border-radius: 8px;
+      background: #fffdf7;
+      font-size: clamp(3.9rem, 13vw, 8.5rem);
+      font-weight: 950;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .answer-button {
+      min-height: 90px;
+      border: 4px solid #14213d;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 7px 7px 0 #14213d;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: clamp(2rem, 6vw, 3.8rem);
+      font-weight: 950;
+      transition: transform 130ms ease, box-shadow 130ms ease, background 130ms ease;
+      touch-action: manipulation;
+    }
+
+    .answer-button:hover,
+    .answer-button:focus-visible {
+      transform: translate(-2px, -2px);
+      box-shadow: 10px 10px 0 #14213d;
+      background: #e9fbff;
+      outline: none;
+    }
+
+    .answer-button:active {
+      transform: translate(4px, 4px);
+      box-shadow: 3px 3px 0 #14213d;
+    }
+
+    .answer-button.good {
+      background: #bbf7d0;
+    }
+
+    .answer-button.bad {
+      background: #ffd0dc;
+    }
+
+    .feedback {
+      min-height: 34px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.4vw, 1.25rem);
+      font-weight: 900;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .lightning-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .lightning-layer.strike {
+      animation: flash 520ms ease-out;
+    }
+
+    .lightning-bolt {
+      position: absolute;
+      top: -4vh;
+      left: 50%;
+      width: min(180px, 28vw);
+      height: min(620px, 86vh);
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, #fff7a6 0%, #ffd23f 54%, #ff6b35 100%);
+      clip-path: polygon(42% 0, 72% 0, 58% 31%, 80% 31%, 34% 100%, 47% 51%, 25% 51%);
+      filter: drop-shadow(0 0 18px #fff6a4) drop-shadow(0 0 44px #f7b801);
+    }
+
+    .lightning-layer.strike .lightning-bolt {
+      animation: boltShake 520ms steps(2, end);
+    }
+
+    .reward-panel {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+    }
+
+    .reward-title {
+      margin: 0;
+      font-size: clamp(2.1rem, 7vw, 4rem);
+      line-height: 1;
+    }
+
+    .reward-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.5vw, 1.22rem);
+      font-weight: 850;
+    }
+
+    .monster-card {
+      width: min(360px, 88vw);
+      aspect-ratio: 2.5 / 3.5;
+      display: grid;
+      grid-template-rows: auto 1fr auto auto;
+      gap: 10px;
+      padding: 16px;
+      border: 8px solid var(--card-border, #f7b801);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.72), rgba(255,255,255,0.12)),
+        linear-gradient(145deg, var(--card-a, #8ecae6), var(--card-b, #ffb703));
+      box-shadow: 10px 12px 0 #14213d, 0 20px 50px rgba(20, 33, 61, 0.22);
+      text-align: left;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .card-name {
+      margin: 0;
+      font-size: clamp(1.55rem, 6vw, 2.1rem);
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .rarity {
+      flex: 0 0 auto;
+      padding: 6px 8px;
+      border: 2px solid rgba(20, 33, 61, 0.6);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.82);
+      font-size: 0.75rem;
+      font-weight: 950;
+    }
+
+    .creature-art {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      border: 4px solid rgba(20, 33, 61, 0.48);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.88) 0 12%, transparent 13%),
+        radial-gradient(circle at 75% 70%, rgba(255,255,255,0.52) 0 10%, transparent 11%),
+        rgba(255,255,255,0.26);
+      overflow: hidden;
+    }
+
+    .creature-art.generated-art {
+      background-image: url("assets/monster-sprite.png");
+      background-repeat: no-repeat;
+      background-size: 500% 400%;
+      background-position: var(--sprite-pos, 0% 0%);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
+    }
+
+    .creature-art.generated-art .creature {
+      display: none;
+    }
+
+    .creature-art::before,
+    .creature-art::after {
+      content: "";
+      position: absolute;
+      display: block;
+    }
+
+    .creature {
+      position: relative;
+      width: 48%;
+      aspect-ratio: 1;
+      border-radius: var(--body-radius, 54% 46% 48% 52%);
+      background: var(--body, #22c55e);
+      box-shadow: inset -14px -18px 0 rgba(20, 33, 61, 0.14), 0 12px 0 rgba(20, 33, 61, 0.12);
+    }
+
+    .creature::before,
+    .creature::after {
+      content: "";
+      position: absolute;
+      top: 32%;
+      width: 15%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #14213d;
+      box-shadow: 0 0 0 5px #fff;
+    }
+
+    .creature::before {
+      left: 25%;
+    }
+
+    .creature::after {
+      right: 25%;
+    }
+
+    .creature-ear {
+      position: absolute;
+      inset: -19% 16% auto;
+      height: 36%;
+      background: var(--accent, #f7b801);
+      clip-path: polygon(0 100%, 18% 0, 38% 100%, 62% 100%, 82% 0, 100% 100%);
+    }
+
+    .creature-smile {
+      position: absolute;
+      left: 36%;
+      bottom: 24%;
+      width: 28%;
+      height: 16%;
+      border-bottom: 5px solid #14213d;
+      border-radius: 0 0 999px 999px;
+    }
+
+    .card-type {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.82);
+      color: #14213d;
+      font-weight: 950;
+      border: 2px solid rgba(20, 33, 61, 0.55);
+    }
+
+    .card-description {
+      min-height: 52px;
+      margin: 0;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.76);
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .play-again {
+      min-height: 56px;
+      padding: 0 20px;
+      border: 3px solid #14213d;
+      border-radius: 8px;
+      background: var(--gold);
+      box-shadow: 6px 6px 0 #14213d;
+      color: #14213d;
+      cursor: pointer;
+      font-weight: 950;
+      transition: transform 130ms ease, box-shadow 130ms ease;
+    }
+
+    .play-again:hover,
+    .play-again:focus-visible {
+      transform: translate(-2px, -2px);
+      box-shadow: 9px 9px 0 #14213d;
+      outline: none;
+    }
+
+    @keyframes flash {
+      0% { opacity: 0; background: rgba(255,255,255,0); }
+      15% { opacity: 1; background: rgba(255,255,255,0.88); }
+      32% { opacity: 1; background: rgba(247,184,1,0.28); }
+      100% { opacity: 0; background: rgba(255,255,255,0); }
+    }
+
+    @keyframes boltShake {
+      0%, 100% { transform: translateX(-50%) rotate(-5deg); }
+      50% { transform: translateX(-42%) rotate(5deg); }
+    }
+
+    @media (max-width: 660px) {
+      .app {
+        width: min(100vw - 18px, 520px);
+        padding-top: 10px;
+      }
+
+      .topbar {
+        align-items: stretch;
+      }
+
+      .bolt-mark {
+        width: 34px;
+        height: 34px;
+      }
+
+      .score-pill {
+        min-width: 94px;
+        box-shadow: 4px 4px 0 #14213d;
+      }
+
+      .question-panel,
+      .reward-panel {
+        padding: 16px;
+      }
+
+      .answers {
+        grid-template-columns: 1fr;
+        gap: 11px;
+      }
+
+      .answer-button {
+        min-height: 76px;
+        box-shadow: 5px 5px 0 #14213d;
+      }
+
+      .problem {
+        min-height: 96px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="lightning-layer" id="lightningLayer" aria-hidden="true">
+    <div class="lightning-bolt"></div>
+  </div>
+
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="bolt-mark" aria-hidden="true"></div>
+        <div>
+          <h1>Subtraction Strike</h1>
+          <p class="subtitle">Solve 20 to unlock a mystery monster card.</p>
+        </div>
+      </div>
+      <div class="score-pill" id="scorePill">0 / 20</div>
+    </header>
+
+    <section class="game-stage" aria-live="polite">
+      <div class="question-panel" id="gamePanel">
+        <p class="prompt-label">Choose the answer</p>
+        <div class="problem" id="problemText">74 - 29</div>
+        <div class="answers" id="answers"></div>
+        <div class="feedback" id="feedback">You got this.</div>
+      </div>
+
+      <div class="reward-panel hidden" id="rewardPanel">
+        <h2 class="reward-title">Card Unlocked!</h2>
+        <p class="reward-copy">Your 20-point reward is ready.</p>
+        <article class="monster-card" id="monsterCard" aria-label="Mystery monster card">
+          <div class="card-head">
+            <h3 class="card-name" id="cardName">Volt Cub</h3>
+            <div class="rarity" id="cardRarity">Rare</div>
+          </div>
+          <div class="creature-art generated-art" id="creatureArt">
+            <div class="creature" id="creature">
+              <span class="creature-ear"></span>
+              <span class="creature-smile"></span>
+            </div>
+          </div>
+          <div class="card-type" id="cardType">Spark Type</div>
+          <p class="card-description" id="cardDescription">A bright little champion that stores lightning in its paws.</p>
+        </article>
+        <button class="play-again" id="playAgain" type="button">Play again</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const POINTS_TO_WIN = 20;
+
+    const cards = [
+      { name: "Volt Cub", type: "Spark Type", rarity: "Rare", desc: "Stores tiny thunderclaps in its paws and shares them with brave math heroes.", a: "#ffd23f", b: "#35c2ff", border: "#f7b801", body: "#facc15", accent: "#38bdf8", radius: "54% 46% 48% 52%" },
+      { name: "Bubble Lynx", type: "Wave Type", rarity: "Shiny", desc: "Makes bubble shields that pop into confetti when subtraction gets speedy.", a: "#76e4f7", b: "#7dd3fc", border: "#0ea5e9", body: "#38bdf8", accent: "#d9f99d", radius: "42% 58% 44% 56%" },
+      { name: "Cinder Pup", type: "Blaze Type", rarity: "Rare", desc: "A cheerful trailblazer with a tail that glows brighter after every correct answer.", a: "#ff9f1c", b: "#ff5c8a", border: "#fb5607", body: "#fb7185", accent: "#fde047", radius: "58% 42% 55% 45%" },
+      { name: "Moss Munch", type: "Leaf Type", rarity: "Common", desc: "Crunches numbers and leafy snacks with the exact same happy focus.", a: "#bbf7d0", b: "#34d399", border: "#16a34a", body: "#22c55e", accent: "#fef08a", radius: "48% 52% 60% 40%" },
+      { name: "Nova Newt", type: "Star Type", rarity: "Ultra", desc: "Carries a pocket-sized galaxy that twinkles whenever someone keeps trying.", a: "#c4b5fd", b: "#60a5fa", border: "#7c3aed", body: "#8b5cf6", accent: "#f9a8d4", radius: "50% 50% 43% 57%" },
+      { name: "Pebble Rex", type: "Stone Type", rarity: "Common", desc: "Tiny, sturdy, and impossible to discourage during a tough round.", a: "#e5e7eb", b: "#a3a3a3", border: "#57534e", body: "#a8a29e", accent: "#fde68a", radius: "45% 55% 50% 50%" },
+      { name: "Frost Finch", type: "Ice Type", rarity: "Rare", desc: "Freezes tricky wrong answers, then skates straight toward the right one.", a: "#cffafe", b: "#a5b4fc", border: "#06b6d4", body: "#67e8f9", accent: "#ffffff", radius: "60% 40% 52% 48%" },
+      { name: "Comet Kid", type: "Cosmic Type", rarity: "Ultra", desc: "Zooms across the scoreboard with a glowing comet cape.", a: "#f0abfc", b: "#818cf8", border: "#a855f7", body: "#ec4899", accent: "#fde047", radius: "52% 48% 42% 58%" },
+      { name: "Turbo Toad", type: "Zoom Type", rarity: "Uncommon", desc: "Leaps over number lines in a blur of giggles and green sparks.", a: "#86efac", b: "#2dd4bf", border: "#14b8a6", body: "#10b981", accent: "#fef3c7", radius: "58% 42% 65% 35%" },
+      { name: "Glimmer Bat", type: "Glow Type", rarity: "Shiny", desc: "Lights up the cave of confusing math with two bright little eyes.", a: "#fbcfe8", b: "#93c5fd", border: "#db2777", body: "#6366f1", accent: "#f472b6", radius: "44% 56% 38% 62%" },
+      { name: "Drizzle Duck", type: "Rain Type", rarity: "Common", desc: "Splashes away mistakes and leaves puddles shaped like minus signs.", a: "#bfdbfe", b: "#5eead4", border: "#0284c7", body: "#0ea5e9", accent: "#fde047", radius: "56% 44% 60% 40%" },
+      { name: "Rocket Roo", type: "Jump Type", rarity: "Rare", desc: "Bounces higher with every correct answer and lands with a starry boom.", a: "#fdba74", b: "#fef08a", border: "#f97316", body: "#fb923c", accent: "#60a5fa", radius: "48% 52% 45% 55%" },
+      { name: "Prism Puff", type: "Rainbow Type", rarity: "Shiny", desc: "Turns every solved problem into a floating ribbon of color.", a: "#f9a8d4", b: "#86efac", border: "#e879f9", body: "#f0abfc", accent: "#93c5fd", radius: "63% 37% 58% 42%" },
+      { name: "Metal Mite", type: "Chrome Type", rarity: "Uncommon", desc: "Polishes numbers until the answer shines like a trophy.", a: "#d1d5db", b: "#93c5fd", border: "#64748b", body: "#94a3b8", accent: "#facc15", radius: "42% 58% 42% 58%" },
+      { name: "Sun Sprout", type: "Solar Type", rarity: "Rare", desc: "Grows a new petal each time a player sticks with the challenge.", a: "#fde047", b: "#4ade80", border: "#eab308", body: "#84cc16", accent: "#fb7185", radius: "50% 50% 62% 38%" },
+      { name: "Moon Manta", type: "Dream Type", rarity: "Ultra", desc: "Glides quietly through night skies, carrying wishes for perfect scores.", a: "#a5b4fc", b: "#f5d0fe", border: "#6366f1", body: "#818cf8", accent: "#fef08a", radius: "66% 34% 50% 50%" },
+      { name: "Jelly Jolt", type: "Zap Type", rarity: "Uncommon", desc: "Wobbles, sparkles, and zaps the air when quick thinking wins.", a: "#99f6e4", b: "#fde68a", border: "#0d9488", body: "#2dd4bf", accent: "#fbbf24", radius: "60% 40% 70% 30%" },
+      { name: "Salsa Snail", type: "Rhythm Type", rarity: "Common", desc: "Dances slowly but subtracts with surprising confidence.", a: "#fecaca", b: "#fdba74", border: "#ef4444", body: "#f87171", accent: "#22c55e", radius: "45% 55% 56% 44%" },
+      { name: "Aqua Imp", type: "Splash Type", rarity: "Rare", desc: "Makes a wave whenever a hard problem suddenly feels easy.", a: "#67e8f9", b: "#38bdf8", border: "#0891b2", body: "#06b6d4", accent: "#c084fc", radius: "52% 48% 61% 39%" },
+      { name: "Thunder Bean", type: "Tiny Titan", rarity: "Legend", desc: "Small enough for a pocket, powerful enough to celebrate twenty wins.", a: "#fde047", b: "#fb7185", border: "#facc15", body: "#f59e0b", accent: "#22d3ee", radius: "57% 43% 68% 32%" }
+    ].map((card, sprite) => ({ ...card, sprite }));
+
+    const state = {
+      score: 0,
+      currentAnswer: 0,
+      accepting: true,
+      audioContext: null
+    };
+
+    const scorePill = document.getElementById("scorePill");
+    const problemText = document.getElementById("problemText");
+    const answers = document.getElementById("answers");
+    const feedback = document.getElementById("feedback");
+    const lightningLayer = document.getElementById("lightningLayer");
+    const gamePanel = document.getElementById("gamePanel");
+    const rewardPanel = document.getElementById("rewardPanel");
+    const playAgain = document.getElementById("playAgain");
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffle(values) {
+      return values
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(item => item.value);
+    }
+
+    function makeProblem() {
+      const top = randomInt(20, 99);
+      const bottom = randomInt(10, top);
+      const correct = top - bottom;
+      const choices = new Set([correct]);
+
+      while (choices.size < 4) {
+        const offset = randomInt(-18, 18);
+        const candidate = correct + offset;
+        if (candidate >= 0 && candidate <= 99 && candidate !== correct) {
+          choices.add(candidate);
+        }
+      }
+
+      state.currentAnswer = correct;
+      problemText.textContent = `${top} - ${bottom}`;
+      renderAnswers(shuffle([...choices]));
+    }
+
+    function renderAnswers(choices) {
+      answers.innerHTML = "";
+      choices.forEach(choice => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer-button";
+        button.textContent = choice;
+        button.setAttribute("aria-label", `Answer ${choice}`);
+        button.addEventListener("click", () => handleAnswer(choice, button));
+        answers.appendChild(button);
+      });
+    }
+
+    function updateScore() {
+      scorePill.textContent = `${state.score} / ${POINTS_TO_WIN}`;
+    }
+
+    function getAudioContext() {
+      if (!state.audioContext) {
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return state.audioContext;
+    }
+
+    function playCorrectSound() {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      [392, 523.25, 783.99].forEach((frequency, index) => {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(frequency, now + index * 0.055);
+        gain.gain.setValueAtTime(0.001, now + index * 0.055);
+        gain.gain.exponentialRampToValueAtTime(0.13, now + index * 0.055 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.055 + 0.18);
+        oscillator.connect(gain).connect(ctx.destination);
+        oscillator.start(now + index * 0.055);
+        oscillator.stop(now + index * 0.055 + 0.2);
+      });
+    }
+
+    function playSadComputerSound() {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(260, now);
+      oscillator.frequency.exponentialRampToValueAtTime(90, now + 0.46);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.52);
+    }
+
+    function triggerLightning() {
+      lightningLayer.classList.remove("strike");
+      void lightningLayer.offsetWidth;
+      lightningLayer.classList.add("strike");
+    }
+
+    function getSpritePosition(sprite) {
+      const column = sprite % 5;
+      const row = Math.floor(sprite / 5);
+      const x = column * 25;
+      const y = row * (100 / 3);
+      return `${x}% ${y}%`;
+    }
+
+    function handleAnswer(choice, button) {
+      if (!state.accepting) return;
+
+      state.accepting = false;
+
+      if (choice === state.currentAnswer) {
+        button.classList.add("good");
+        state.score += 1;
+        updateScore();
+        feedback.textContent = state.score === POINTS_TO_WIN ? "Amazing finish!" : "Zap! Correct!";
+        playCorrectSound();
+        triggerLightning();
+
+        window.setTimeout(() => {
+          if (state.score >= POINTS_TO_WIN) {
+            showReward();
+          } else {
+            nextRound("Next one!");
+          }
+        }, 720);
+      } else {
+        button.classList.add("bad");
+        feedback.textContent = `Try again. The answer was ${state.currentAnswer}.`;
+        playSadComputerSound();
+        window.setTimeout(() => nextRound("Fresh problem. You can do it."), 960);
+      }
+    }
+
+    function nextRound(message) {
+      state.accepting = true;
+      feedback.textContent = message;
+      makeProblem();
+    }
+
+    function showReward() {
+      const card = cards[randomInt(0, cards.length - 1)];
+      document.getElementById("cardName").textContent = card.name;
+      document.getElementById("cardType").textContent = card.type;
+      document.getElementById("cardRarity").textContent = card.rarity;
+      document.getElementById("cardDescription").textContent = card.desc;
+
+      const monsterCard = document.getElementById("monsterCard");
+      monsterCard.style.setProperty("--card-a", card.a);
+      monsterCard.style.setProperty("--card-b", card.b);
+      monsterCard.style.setProperty("--card-border", card.border);
+
+      const creatureArt = document.getElementById("creatureArt");
+      creatureArt.style.setProperty("--sprite-pos", getSpritePosition(card.sprite));
+
+      const creature = document.getElementById("creature");
+      creature.style.setProperty("--body", card.body);
+      creature.style.setProperty("--accent", card.accent);
+      creature.style.setProperty("--body-radius", card.radius);
+
+      gamePanel.classList.add("hidden");
+      rewardPanel.classList.remove("hidden");
+      feedback.textContent = "";
+    }
+
+    function resetGame() {
+      state.score = 0;
+      state.accepting = true;
+      updateScore();
+      rewardPanel.classList.add("hidden");
+      gamePanel.classList.remove("hidden");
+      feedback.textContent = "You got this.";
+      makeProblem();
+    }
+
+    playAgain.addEventListener("click", resetGame);
+    updateScore();
+    makeProblem();
+  </script>
+</body>
+</html>
